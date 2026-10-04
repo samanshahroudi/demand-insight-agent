@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Product(BaseModel):
@@ -32,6 +32,12 @@ class RunRequest(BaseModel):
     product_ids: list[str] = Field(default_factory=list, max_length=30)
     limit: int = Field(default=5, ge=1, le=20)
     use_llm_summary: bool = False
+
+    @model_validator(mode="after")
+    def require_shortlist(self) -> "RunRequest":
+        if self.mode == "shortlist" and not self.product_ids:
+            raise ValueError("Provide at least one product_id in shortlist mode.")
+        return self
 
 
 class RunResponse(BaseModel):

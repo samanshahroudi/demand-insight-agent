@@ -13,8 +13,6 @@ def health() -> dict[str, str]:
 
 @app.post("/runs", response_model=RunResponse)
 def create_run(request: RunRequest) -> RunResponse:
-    if request.mode == "shortlist" and not request.product_ids:
-        raise HTTPException(status_code=422, detail="Provide at least one product_id in shortlist mode.")
     try:
         return RunResponse.model_validate(run(request))
     except ValueError as exc:
