@@ -1,0 +1,68 @@
+[
+  {
+    "product_id": "sample-001",
+    "name": "Insulated travel mug",
+    "category": "home",
+    "demand_signal": 0.82,
+    "advertiser_count": 7,
+    "gross_margin": 0.48,
+    "market_saturation": 0.38,
+    "rating": 4.6,
+    "evidence_count": 18
+  },
+  {
+    "product_id": "sample-002",
+    "name": "Compact desk lamp",
+    "category": "office",
+    "demand_signal": 0.71,
+    "advertiser_count": 4,
+    "gross_margin": 0.55,
+    "market_saturation": 0.25,
+    "rating": 4.4,
+    "evidence_count": 12
+  },
+  {
+    "product_id": "sample-003",
+    "name": "Portable smoothie blender",
+    "category": "kitchen",
+    "demand_signal": 0.91,
+    "advertiser_count": 12,
+    "gross_margin": 0.22,
+    "market_saturation": 0.82,
+    "rating": 3.8,
+    "evidence_count": 25
+  },
+  {
+    "product_id": "sample-004",
+    "name": "Reusable produce bags",
+    "category": "home",
+    "demand_signal": 0.49,
+    "advertiser_count": 2,
+    "gross_margin": 0.63,
+    "market_saturation": 0.16,
+    "rating": 4.7,
+    "evidence_count": 6
+  },
+  {
+    "product_id": "sample-005",
+    "name": "Posture support cushion",
+    "category": "wellness",
+    "demand_signal": 0.76,
+    "advertiser_count": 5,
+    "gross_margin": 0.41,
+    "market_saturation": 0.47,
+    "rating": 4.2,
+    "evidence_count": 14
+  },
+  {
+    "product_id": "sample-006",
+    "name": "Rechargeable hand warmer",
+    "category": "outdoors",
+    "demand_signal": 0.58,
+    "advertiser_count": 3,
+    "gross_margin": 0.36,
+    "market_saturation": 0.31,
+    "rating": 4.1,
+    "evidence_count": 9
+  }
+]
