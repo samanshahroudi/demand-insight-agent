@@ -46,8 +46,10 @@ def deterministic_summary(state: RunState) -> dict:
     results = [ProductAssessment.model_validate(item) for item in state["assessments"]]
     if not results:
         return {"summary": "No products matched this run."}
-    leaders = ", ".join(f"{item.name} ({item.score:.1f})" for item in results[:3])
-    return {"summary": f"Top opportunities by the current scoring rules: {leaders}."}
+    leaders = ", ".join(
+        f"{item.name} ({item.score:.1f}, {item.verdict})" for item in results[:3]
+    )
+    return {"summary": f"Top ranked products by the current scoring rules: {leaders}."}
 
 
 def model_summary(state: RunState) -> dict:
