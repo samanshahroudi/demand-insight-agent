@@ -34,3 +34,21 @@ def test_blank_product_ids_are_rejected_before_graph_execution(monkeypatch, prod
         "mode": "shortlist", "product_ids": ["sample-001", product_id]})
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"] == ["body", "product_ids", 1]
+
+
+@pytest.mark.parametrize("mode", ["discover", "shortlist"])
+def test_tied_scores_use_product_ids_before_applying_limit(monkeypatch, mode):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    base = {"category": "demo", "demand_signal": 1, "advertiser_count": 8,
+            "gross_margin": 0.6, "market_saturation": 0, "rating": 5, "evidence_count": 15}
+    catalog = [{**base, "product_id": key, "name": key} for key in ["c", "a", "b"]]
+    client = TestClient(app)
+    payload = {"mode": mode, "limit": 2, "product_ids": ["c", "b", "a"]}
+    for order in [catalog, list(reversed(catalog))]:
+        monkeypatch.setattr(graph_module, "_catalog", lambda order=order: order)
+        response = client.post("/runs", json=payload)
+        assert response.status_code == 200
+        assert [item["product_id"] for item in response.json()["assessments"]] == ["a", "b"]
+        assert [item["score"] for item in response.json()["assessments"]] == [100, 100]

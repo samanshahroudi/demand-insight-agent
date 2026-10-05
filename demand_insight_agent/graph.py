@@ -38,7 +38,7 @@ def select_candidates(state: RunState) -> dict:
 def score_candidates(state: RunState) -> dict:
     request = RunRequest.model_validate(state["request"])
     results = [assess(Product.model_validate(item)).model_dump() for item in state["candidates"]]
-    results.sort(key=lambda item: item["score"], reverse=True)
+    results.sort(key=lambda item: (-item["score"], item["product_id"]))
     return {"assessments": results[: request.limit]}
 
 
