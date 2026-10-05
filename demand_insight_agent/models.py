@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -29,7 +29,9 @@ class ProductAssessment(BaseModel):
 
 class RunRequest(BaseModel):
     mode: Literal["discover", "shortlist"] = "discover"
-    product_ids: list[str] = Field(default_factory=list, max_length=30)
+    product_ids: list[Annotated[str, Field(min_length=1, pattern=r"\S")]] = Field(
+        default_factory=list, max_length=30,
+    )
     limit: int = Field(default=5, ge=1, le=20)
     use_llm_summary: bool = False
 

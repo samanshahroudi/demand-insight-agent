@@ -22,3 +22,15 @@ def test_discovery_and_valid_shortlist_still_run():
     shortlist = client.post("/runs", json={"mode": "shortlist", "product_ids": ["sample-001"]})
     assert shortlist.status_code == 200
     assert [item["product_id"] for item in shortlist.json()["assessments"]] == ["sample-001"]
+
+
+@pytest.mark.parametrize("product_id", ["", " ", "\t\n"])
+def test_blank_product_ids_are_rejected_before_graph_execution(monkeypatch, product_id):
+    with pytest.raises(ValidationError):
+        RunRequest(mode="shortlist", product_ids=["sample-001", product_id])
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("invalid IDs must not execute the graph"))
+    response = TestClient(app).post("/runs", json={
+        "mode": "shortlist", "product_ids": ["sample-001", product_id]})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "product_ids", 1]

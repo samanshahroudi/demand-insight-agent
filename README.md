@@ -47,6 +47,7 @@ Set `OPENAI_API_KEY` and `OPENAI_MODEL` and pass `"use_llm_summary": true` to re
 
 - `GET /health` reports service health.
 - `POST /runs` accepts `mode` (`discover` or `shortlist`), optional `product_ids`, result `limit`, and `use_llm_summary`.
+- Product IDs must contain non-whitespace text; malformed IDs return HTTP 422 before the graph runs.
 - Each response includes a run ID, ranked assessments, a summary, and the scoring version.
 
 ## Design choices and next steps
