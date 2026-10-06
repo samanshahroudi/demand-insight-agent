@@ -65,7 +65,10 @@ def model_summary(state: RunState) -> dict:
         "Results: {results}"
     )
     response = model.invoke(prompt.format(results=json.dumps(state["assessments"], ensure_ascii=False)))
-    return {"summary": str(response.text)}
+    summary = str(response.text)
+    if not summary.strip():
+        raise ValueError("Model returned no summary text.")
+    return {"summary": summary}
 
 
 def _summary_route(state: RunState) -> str:

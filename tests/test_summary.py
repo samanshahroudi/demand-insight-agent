@@ -1,3 +1,5 @@
+import pytest
+
 from demand_insight_agent.graph import deterministic_summary
 from demand_insight_agent.models import Product
 from demand_insight_agent.scoring import assess
@@ -36,3 +38,20 @@ def test_model_summary_extracts_text_from_string_and_content_blocks(monkeypatch)
         assert model_summary({"assessments": []}) == {"summary": text}
         factory.assert_called_once_with(model="test-model", temperature=0)
         model.invoke.assert_called_once()
+
+
+@pytest.mark.parametrize("content", ["", " \t\n", [{"type": "reasoning", "reasoning": "private"}]])
+def test_model_summary_rejects_responses_without_summary_text(monkeypatch, content):
+    from unittest.mock import Mock
+
+    from langchain_core.messages import AIMessage
+
+    from demand_insight_agent.graph import model_summary
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    model = Mock()
+    model.invoke.return_value = AIMessage(content=content)
+    monkeypatch.setattr("langchain_openai.ChatOpenAI", Mock(return_value=model))
+    with pytest.raises(ValueError, match="no summary text"):
+        model_summary({"assessments": []})

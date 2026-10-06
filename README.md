@@ -42,6 +42,7 @@ curl -X POST http://127.0.0.1:8000/runs \
 ```
 
 Set `OPENAI_API_KEY` and `OPENAI_MODEL` and pass `"use_llm_summary": true` to request a model-written summary. Without that option, all functionality is local and does not make model calls.
+An empty, whitespace-only, or reasoning-only model response returns HTTP 422 with `Model returned no summary text.` instead of a successful run with a blank summary.
 
 ## API
 
