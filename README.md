@@ -42,6 +42,7 @@ curl -X POST http://127.0.0.1:8000/runs \
 ```
 
 Set `OPENAI_API_KEY` and `OPENAI_MODEL` and pass `"use_llm_summary": true` to request a model-written summary. Without that option, all functionality is local and does not make model calls.
+`use_llm_summary` requires a JSON boolean; strings and numbers return HTTP 422 before the graph runs.
 
 ## API
 

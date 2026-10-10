@@ -33,7 +33,7 @@ class RunRequest(BaseModel):
         default_factory=list, max_length=30,
     )
     limit: int = Field(default=5, ge=1, le=20)
-    use_llm_summary: bool = False
+    use_llm_summary: bool = Field(default=False, strict=True)
 
     @model_validator(mode="after")
     def require_shortlist(self) -> "RunRequest":
