@@ -6,6 +6,22 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("flag", ["true", "false", "yes", "0", 0, 1, None])
+def test_summary_opt_in_requires_boolean_before_graph_execution(monkeypatch, flag):
+    with pytest.raises(ValidationError):
+        RunRequest(use_llm_summary=flag)
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("invalid opt-in must not execute the graph"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": flag})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "use_llm_summary"]
+
+
+@pytest.mark.parametrize("flag", [True, False])
+def test_summary_opt_in_preserves_boolean_values(flag):
+    assert RunRequest(use_llm_summary=flag).use_llm_summary is flag
+
+
 def test_empty_shortlist_is_rejected_by_shared_request_model():
     with pytest.raises(ValidationError, match="at least one product_id"):
         RunRequest(mode="shortlist")
