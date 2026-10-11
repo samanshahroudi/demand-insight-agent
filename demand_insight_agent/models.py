@@ -32,7 +32,7 @@ class RunRequest(BaseModel):
     product_ids: list[Annotated[str, Field(min_length=1, pattern=r"\S")]] = Field(
         default_factory=list, max_length=30,
     )
-    limit: int = Field(default=5, ge=1, le=20)
+    limit: int = Field(default=5, ge=1, le=20, strict=True)
     use_llm_summary: bool = Field(default=False, strict=True)
 
     @model_validator(mode="after")

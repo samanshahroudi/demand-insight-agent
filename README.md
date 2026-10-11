@@ -50,6 +50,7 @@ An empty, whitespace-only, or reasoning-only model response returns HTTP 422 wit
 - `GET /health` reports service health.
 - `POST /runs` accepts `mode` (`discover` or `shortlist`), optional `product_ids`, result `limit`, and `use_llm_summary`.
 - Product IDs must contain non-whitespace text; malformed IDs return HTTP 422 before the graph runs.
+- Result `limit` requires a JSON integer from 1 to 20; booleans, strings, and floats return HTTP 422 before the graph runs.
 - Each response includes a run ID, ranked assessments, a summary, and the scoring version.
 - Equal scores are ordered by product ID before applying the result limit, so catalog order does not change tied selections.
 - Deterministic summaries include each leading product's score and verdict, so a high score cannot hide rejection by the gross-margin gate.
