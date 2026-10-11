@@ -8,11 +8,11 @@ class Product(BaseModel):
     name: str
     category: str
     demand_signal: float = Field(ge=0, le=1)
-    advertiser_count: int = Field(ge=0)
+    advertiser_count: int = Field(ge=0, strict=True)
     gross_margin: float = Field(ge=0, le=1)
     market_saturation: float = Field(ge=0, le=1)
     rating: float = Field(ge=0, le=5)
-    evidence_count: int = Field(ge=0)
+    evidence_count: int = Field(ge=0, strict=True)
 
 
 class ProductAssessment(BaseModel):

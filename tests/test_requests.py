@@ -68,3 +68,20 @@ def test_tied_scores_use_product_ids_before_applying_limit(monkeypatch, mode):
         assert response.status_code == 200
         assert [item["product_id"] for item in response.json()["assessments"]] == ["a", "b"]
         assert [item["score"] for item in response.json()["assessments"]] == [100, 100]
+
+
+@pytest.mark.parametrize("field", ["advertiser_count", "evidence_count"])
+def test_invalid_catalog_counts_do_not_produce_scores_or_request_summary(monkeypatch, field):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    item = {"product_id": "sample-001", "name": "Example", "category": "demo",
+            "demand_signal": 1, "advertiser_count": 8, "gross_margin": 0.6,
+            "market_saturation": 0, "rating": 5, "evidence_count": 15, field: True}
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid counts must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 422
+    assert field in response.json()["detail"]
+    assert "assessments" not in response.json()

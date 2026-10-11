@@ -16,6 +16,8 @@ POST /runs
 
 The 100-point score combines demand (30), advertiser validation (20), gross margin (25), market headroom (15), and customer rating (10). Products below a 15% gross margin are rejected. The response includes each component, evidence-based confidence, and human-readable reasons. These example weights are not validated business advice.
 
+Catalog advertiser and evidence counts require nonnegative integers. Booleans, strings, and floats are rejected rather than coerced into scoring or confidence inputs.
+
 ## Run locally
 
 ```bash
