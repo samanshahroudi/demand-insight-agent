@@ -22,6 +22,17 @@ def test_summary_opt_in_preserves_boolean_values(flag):
     assert RunRequest(use_llm_summary=flag).use_llm_summary is flag
 
 
+@pytest.mark.parametrize("limit", [True, False, "3", 3.0, 1.5, None])
+def test_result_limit_requires_integer_before_graph_execution(monkeypatch, limit):
+    with pytest.raises(ValidationError):
+        RunRequest(limit=limit)
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("invalid limit must not execute the graph"))
+    response = TestClient(app).post("/runs", json={"limit": limit})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "limit"]
+
+
 def test_empty_shortlist_is_rejected_by_shared_request_model():
     with pytest.raises(ValidationError, match="at least one product_id"):
         RunRequest(mode="shortlist")
