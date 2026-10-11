@@ -6,6 +6,25 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("limit", [True, False, "5", 5.0, 5.5])
+def test_limit_requires_integer_before_graph_execution(monkeypatch, limit):
+    with pytest.raises(ValidationError):
+        RunRequest(limit=limit)
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("invalid limits must not execute the graph"))
+    response = TestClient(app).post("/runs", json={"limit": limit})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "limit"]
+
+
+@pytest.mark.parametrize("limit", [1, 20])
+def test_integer_limit_boundaries_run_successfully(limit):
+    assert RunRequest(limit=limit).limit == limit
+    response = TestClient(app).post("/runs", json={"limit": limit})
+    assert response.status_code == 200
+    assert 0 < len(response.json()["assessments"]) <= limit
+
+
 @pytest.mark.parametrize("flag", ["true", "false", "yes", "0", 0, 1, None])
 def test_summary_opt_in_requires_boolean_before_graph_execution(monkeypatch, flag):
     with pytest.raises(ValidationError):
