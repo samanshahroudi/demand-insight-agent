@@ -59,6 +59,17 @@ def test_discovery_and_valid_shortlist_still_run():
     assert [item["product_id"] for item in shortlist.json()["assessments"]] == ["sample-001"]
 
 
+@pytest.mark.parametrize("product_ids", [["unknown"], ["sample-001", "unknown"]])
+def test_unknown_shortlist_ids_prevent_partial_results_and_model_calls(monkeypatch, product_ids):
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("unknown IDs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": "shortlist", "product_ids": product_ids, "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Unknown product IDs: unknown"}
+
+
 @pytest.mark.parametrize("product_id", ["", " ", "\t\n"])
 def test_blank_product_ids_are_rejected_before_graph_execution(monkeypatch, product_id):
     with pytest.raises(ValidationError):
