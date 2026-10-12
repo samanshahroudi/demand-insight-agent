@@ -58,7 +58,7 @@ def model_summary(state: RunState) -> dict:
     model_name = os.getenv("OPENAI_MODEL")
     if not os.getenv("OPENAI_API_KEY") or not model_name:
         raise ValueError("Set OPENAI_API_KEY and OPENAI_MODEL to enable model-written summaries.")
-    model = ChatOpenAI(model=model_name, temperature=0)
+    model = ChatOpenAI(model=model_name, temperature=0, timeout=20)
     prompt = (
         "Summarize these product opportunity scores for a business operator in 2-3 sentences. "
         "Use only the supplied results. Do not change scores or claim that they predict actual sales.\n\n"

@@ -36,7 +36,7 @@ def test_model_summary_extracts_text_from_string_and_content_blocks(monkeypatch)
         factory = Mock(return_value=model)
         monkeypatch.setattr("langchain_openai.ChatOpenAI", factory)
         assert model_summary({"assessments": []}) == {"summary": text}
-        factory.assert_called_once_with(model="test-model", temperature=0)
+        factory.assert_called_once_with(model="test-model", temperature=0, timeout=20)
         model.invoke.assert_called_once()
 
 
