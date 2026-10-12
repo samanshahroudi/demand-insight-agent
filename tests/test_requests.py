@@ -115,3 +115,21 @@ def test_invalid_catalog_counts_do_not_produce_scores_or_request_summary(monkeyp
     assert response.status_code == 422
     assert field in response.json()["detail"]
     assert "assessments" not in response.json()
+
+
+@pytest.mark.parametrize("field", ["demand_signal", "gross_margin", "market_saturation", "rating"])
+@pytest.mark.parametrize("value", [True, False, "0.5"])
+def test_invalid_catalog_signals_do_not_produce_scores_or_request_summary(monkeypatch, field, value):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    item = {"product_id": "sample-001", "name": "Example", "category": "demo",
+            "demand_signal": 1, "advertiser_count": 8, "gross_margin": 0.6,
+            "market_saturation": 0, "rating": 5, "evidence_count": 15, field: value}
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid signals must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 422
+    assert field in response.json()["detail"]
+    assert "assessments" not in response.json()
