@@ -133,3 +133,20 @@ def test_invalid_catalog_signals_do_not_produce_scores_or_request_summary(monkey
     assert response.status_code == 422
     assert field in response.json()["detail"]
     assert "assessments" not in response.json()
+
+
+@pytest.mark.parametrize("product_id", ["", " ", "\t\n"])
+def test_blank_catalog_ids_cannot_produce_assessments_or_model_summaries(monkeypatch, product_id):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    item = {**graph_module._catalog()[0], "product_id": product_id}
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("blank catalog IDs must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 422
+    assert "product_id" in response.json()["detail"]
+    assert "assessments" not in response.json()

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class Product(BaseModel):
-    product_id: str
+    product_id: str = Field(min_length=1, pattern=r"\S")
     name: str
     category: str
     demand_signal: float = Field(ge=0, le=1, strict=True)
