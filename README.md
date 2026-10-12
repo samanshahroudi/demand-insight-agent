@@ -16,6 +16,9 @@ POST /runs
 
 The 100-point score combines demand (30), advertiser validation (20), gross margin (25), market headroom (15), and customer rating (10). Products below a 15% gross margin are rejected. The response includes each component, evidence-based confidence, and human-readable reasons. These example weights are not validated business advice.
 
+Catalog advertiser and evidence counts require nonnegative integers. Booleans, strings, and floats are rejected rather than coerced into scoring or confidence inputs.
+Demand, margin, saturation, and rating signals require numbers; booleans and numeric strings are rejected before scoring or model summaries. Integer and floating-point JSON numbers remain valid within each signal's bounds.
+
 ## Run locally
 
 ```bash
@@ -42,6 +45,7 @@ curl -X POST http://127.0.0.1:8000/runs \
 ```
 
 Set `OPENAI_API_KEY` and `OPENAI_MODEL` and pass `"use_llm_summary": true` to request a model-written summary. Without that option, all functionality is local and does not make model calls.
+Each model-summary request has a 20-second timeout per attempt; provider retries can extend the total run time.
 `use_llm_summary` requires a JSON boolean; strings and numbers return HTTP 422 before the graph runs.
 An empty, whitespace-only, or reasoning-only model response returns HTTP 422 with `Model returned no summary text.` instead of a successful run with a blank summary.
 
@@ -49,6 +53,7 @@ An empty, whitespace-only, or reasoning-only model response returns HTTP 422 wit
 
 - `GET /health` reports service health.
 - `POST /runs` accepts `mode` (`discover` or `shortlist`), optional `product_ids`, result `limit`, and `use_llm_summary`.
+- `limit` requires a JSON integer from 1 to 20; booleans, strings, and floats return HTTP 422 before the graph runs.
 - Product IDs must contain non-whitespace text; malformed IDs return HTTP 422 before the graph runs.
 - Each response includes a run ID, ranked assessments, a summary, and the scoring version.
 - Equal scores are ordered by product ID before applying the result limit, so catalog order does not change tied selections.

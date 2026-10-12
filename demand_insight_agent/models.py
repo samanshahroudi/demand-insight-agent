@@ -7,12 +7,12 @@ class Product(BaseModel):
     product_id: str
     name: str
     category: str
-    demand_signal: float = Field(ge=0, le=1)
-    advertiser_count: int = Field(ge=0)
-    gross_margin: float = Field(ge=0, le=1)
-    market_saturation: float = Field(ge=0, le=1)
-    rating: float = Field(ge=0, le=5)
-    evidence_count: int = Field(ge=0)
+    demand_signal: float = Field(ge=0, le=1, strict=True)
+    advertiser_count: int = Field(ge=0, strict=True)
+    gross_margin: float = Field(ge=0, le=1, strict=True)
+    market_saturation: float = Field(ge=0, le=1, strict=True)
+    rating: float = Field(ge=0, le=5, strict=True)
+    evidence_count: int = Field(ge=0, strict=True)
 
 
 class ProductAssessment(BaseModel):
@@ -32,7 +32,7 @@ class RunRequest(BaseModel):
     product_ids: list[Annotated[str, Field(min_length=1, pattern=r"\S")]] = Field(
         default_factory=list, max_length=30,
     )
-    limit: int = Field(default=5, ge=1, le=20)
+    limit: int = Field(default=5, ge=1, le=20, strict=True)
     use_llm_summary: bool = Field(default=False, strict=True)
 
     @model_validator(mode="after")

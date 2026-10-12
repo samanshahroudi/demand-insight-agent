@@ -6,6 +6,25 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("limit", [True, False, "5", 5.0, 5.5])
+def test_limit_requires_integer_before_graph_execution(monkeypatch, limit):
+    with pytest.raises(ValidationError):
+        RunRequest(limit=limit)
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("invalid limits must not execute the graph"))
+    response = TestClient(app).post("/runs", json={"limit": limit})
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"] == ["body", "limit"]
+
+
+@pytest.mark.parametrize("limit", [1, 20])
+def test_integer_limit_boundaries_run_successfully(limit):
+    assert RunRequest(limit=limit).limit == limit
+    response = TestClient(app).post("/runs", json={"limit": limit})
+    assert response.status_code == 200
+    assert 0 < len(response.json()["assessments"]) <= limit
+
+
 @pytest.mark.parametrize("flag", ["true", "false", "yes", "0", 0, 1, None])
 def test_summary_opt_in_requires_boolean_before_graph_execution(monkeypatch, flag):
     with pytest.raises(ValidationError):
@@ -40,6 +59,17 @@ def test_discovery_and_valid_shortlist_still_run():
     assert [item["product_id"] for item in shortlist.json()["assessments"]] == ["sample-001"]
 
 
+@pytest.mark.parametrize("product_ids", [["unknown"], ["sample-001", "unknown"]])
+def test_unknown_shortlist_ids_prevent_partial_results_and_model_calls(monkeypatch, product_ids):
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("unknown IDs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": "shortlist", "product_ids": product_ids, "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Unknown product IDs: unknown"}
+
+
 @pytest.mark.parametrize("product_id", ["", " ", "\t\n"])
 def test_blank_product_ids_are_rejected_before_graph_execution(monkeypatch, product_id):
     with pytest.raises(ValidationError):
@@ -68,3 +98,38 @@ def test_tied_scores_use_product_ids_before_applying_limit(monkeypatch, mode):
         assert response.status_code == 200
         assert [item["product_id"] for item in response.json()["assessments"]] == ["a", "b"]
         assert [item["score"] for item in response.json()["assessments"]] == [100, 100]
+
+
+@pytest.mark.parametrize("field", ["advertiser_count", "evidence_count"])
+def test_invalid_catalog_counts_do_not_produce_scores_or_request_summary(monkeypatch, field):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    item = {"product_id": "sample-001", "name": "Example", "category": "demo",
+            "demand_signal": 1, "advertiser_count": 8, "gross_margin": 0.6,
+            "market_saturation": 0, "rating": 5, "evidence_count": 15, field: True}
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid counts must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 422
+    assert field in response.json()["detail"]
+    assert "assessments" not in response.json()
+
+
+@pytest.mark.parametrize("field", ["demand_signal", "gross_margin", "market_saturation", "rating"])
+@pytest.mark.parametrize("value", [True, False, "0.5"])
+def test_invalid_catalog_signals_do_not_produce_scores_or_request_summary(monkeypatch, field, value):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    item = {"product_id": "sample-001", "name": "Example", "category": "demo",
+            "demand_signal": 1, "advertiser_count": 8, "gross_margin": 0.6,
+            "market_saturation": 0, "rating": 5, "evidence_count": 15, field: value}
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid signals must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 422
+    assert field in response.json()["detail"]
+    assert "assessments" not in response.json()

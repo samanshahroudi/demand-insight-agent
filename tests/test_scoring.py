@@ -12,6 +12,26 @@ def product(**changes):
     })
 
 
+@pytest.mark.parametrize("field", ["advertiser_count", "evidence_count"])
+@pytest.mark.parametrize("count", [True, False, "8", 8.0, 8.5])
+def test_catalog_counts_require_integers(field, count):
+    with pytest.raises(ValueError):
+        product(**{field: count})
+
+
+@pytest.mark.parametrize("field", ["demand_signal", "gross_margin", "market_saturation", "rating"])
+@pytest.mark.parametrize("value", [True, False, "0.5"])
+def test_catalog_signals_reject_coerced_values(field, value):
+    with pytest.raises(ValueError):
+        product(**{field: value})
+
+
+@pytest.mark.parametrize("field", ["demand_signal", "gross_margin", "market_saturation", "rating"])
+@pytest.mark.parametrize("value", [0, 1, 0.5])
+def test_catalog_signals_accept_json_numbers(field, value):
+    assert getattr(product(**{field: value}), field) == value
+
+
 @pytest.mark.parametrize("demand,advertisers,score,verdict", [
     (0.33, 0, 34.9, "reject"), (1 / 3, 0, 35, "weak"),
     (26.9 / 30, 0, 51.9, "weak"), (0.9, 0, 52, "promising"),
