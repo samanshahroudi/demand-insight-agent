@@ -37,7 +37,10 @@ def select_candidates(state: RunState) -> dict:
 
 def score_candidates(state: RunState) -> dict:
     request = RunRequest.model_validate(state["request"])
-    results = [assess(Product.model_validate(item)).model_dump() for item in state["candidates"]]
+    products = [Product.model_validate(item) for item in state["candidates"]]
+    if len({product.product_id for product in products}) != len(products):
+        raise ValueError("Catalog product IDs must be unique.")
+    results = [assess(product).model_dump() for product in products]
     results.sort(key=lambda item: (-item["score"], item["product_id"]))
     return {"assessments": results[: request.limit]}
 

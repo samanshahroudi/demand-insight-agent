@@ -18,6 +18,7 @@ The 100-point score combines demand (30), advertiser validation (20), gross marg
 
 Catalog advertiser and evidence counts require nonnegative integers. Booleans, strings, and floats are rejected rather than coerced into scoring or confidence inputs.
 Catalog product IDs must contain non-whitespace text, just like shortlist request IDs. Invalid catalog IDs are rejected before assessments or model summaries are produced.
+Selected catalog records must also have unique product IDs; duplicates return HTTP 422 before scoring or requesting a model summary.
 Demand, margin, saturation, and rating signals require numbers; booleans and numeric strings are rejected before scoring or model summaries. Integer and floating-point JSON numbers remain valid within each signal's bounds.
 
 ## Run locally

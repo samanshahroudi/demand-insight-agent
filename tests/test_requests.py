@@ -6,6 +6,25 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("mode", ["discover", "shortlist"])
+def test_duplicate_catalog_ids_cannot_produce_results_or_model_summaries(monkeypatch, mode):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    item = graph_module._catalog()[0]
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [item, {**item, "name": "Duplicate"}])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("duplicate IDs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": mode, "product_ids": [item["product_id"]], "limit": 1,
+        "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Catalog product IDs must be unique."}
+
+
 @pytest.mark.parametrize("limit", [True, False, "5", 5.0, 5.5])
 def test_limit_requires_integer_before_graph_execution(monkeypatch, limit):
     with pytest.raises(ValidationError):
