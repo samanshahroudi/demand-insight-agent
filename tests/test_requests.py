@@ -7,6 +7,33 @@ from demand_insight_agent.models import RunRequest
 
 
 @pytest.mark.parametrize("mode", ["discover", "shortlist"])
+@pytest.mark.parametrize("catalog", [None, {}, "catalog", 7, False])
+def test_nonlist_catalog_is_rejected_before_selection(monkeypatch, mode, catalog):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    monkeypatch.setattr(graph_module, "_catalog", lambda: catalog)
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid catalogs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": mode, "product_ids": ["sample-001"], "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Catalog must be a JSON list."}
+
+
+def test_empty_catalog_still_returns_a_successful_empty_discovery(monkeypatch):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    monkeypatch.setattr(graph_module, "_catalog", list)
+    response = TestClient(app).post("/runs", json={"mode": "discover"})
+    assert response.status_code == 200
+    assert response.json()["assessments"] == []
+    assert response.json()["summary"] == "No products matched this run."
+
+
+@pytest.mark.parametrize("mode", ["discover", "shortlist"])
 @pytest.mark.parametrize("problem", ["missing_id", "unhashable_id", "non_object"])
 def test_malformed_catalog_is_rejected_before_selection(monkeypatch, mode, problem):
     import importlib

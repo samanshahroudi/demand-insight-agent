@@ -20,6 +20,7 @@ Catalog advertiser and evidence counts require nonnegative integers. Booleans, s
 Catalog product IDs must contain non-whitespace text, just like shortlist request IDs. Invalid catalog IDs are rejected before assessments or model summaries are produced.
 Catalog names and categories must also contain non-whitespace text, so results and summaries cannot contain blank product labels.
 Catalog records are validated before shortlist filtering. Missing or malformed product IDs and non-object records return HTTP 422 in both modes before any model summary is requested.
+The catalog must be a JSON list; other top-level values return HTTP 422 before selection or model calls. An empty list remains valid for an empty discovery run.
 The entire catalog must also have unique product IDs; duplicates return HTTP 422 before shortlist filtering, scoring, or requesting a model summary.
 Demand, margin, saturation, and rating signals require numbers; booleans and numeric strings are rejected before scoring or model summaries. Integer and floating-point JSON numbers remain valid within each signal's bounds.
 

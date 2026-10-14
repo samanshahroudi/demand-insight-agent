@@ -25,7 +25,11 @@ def _catalog() -> list[dict]:
 
 def select_candidates(state: RunState) -> dict:
     request = RunRequest.model_validate(state["request"])
-    catalog = [Product.model_validate(item).model_dump() for item in _catalog()]
+    catalog = _catalog()
+    if not isinstance(catalog, list):
+        # Invalid catalog data uses the API's existing ValueError-to-422 boundary.
+        raise ValueError("Catalog must be a JSON list.")  # noqa: TRY004
+    catalog = [Product.model_validate(item).model_dump() for item in catalog]
     if len({item["product_id"] for item in catalog}) != len(catalog):
         raise ValueError("Catalog product IDs must be unique.")
     if request.mode == "shortlist":
