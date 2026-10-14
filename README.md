@@ -50,6 +50,7 @@ curl -X POST http://127.0.0.1:8000/runs \
 
 Set `OPENAI_API_KEY` and `OPENAI_MODEL` and pass `"use_llm_summary": true` to request a model-written summary. Without that option, all functionality is local and does not make model calls.
 Each model-summary request has a 20-second timeout per attempt; provider retries can extend the total run time.
+Model provider failures return HTTP 503 with `Model summary unavailable.` and no partial assessments or provider response details. Deterministic runs and the health endpoint remain available.
 `use_llm_summary` requires a JSON boolean; strings and numbers return HTTP 422 before the graph runs.
 An empty, whitespace-only, or reasoning-only model response returns HTTP 422 with `Model returned no summary text.` instead of a successful run with a blank summary.
 

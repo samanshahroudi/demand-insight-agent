@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from openai import OpenAIError
 
 from .graph import run
 from .models import RunRequest, RunResponse
@@ -15,5 +16,7 @@ def health() -> dict[str, str]:
 def create_run(request: RunRequest) -> RunResponse:
     try:
         return RunResponse.model_validate(run(request))
+    except OpenAIError as exc:
+        raise HTTPException(status_code=503, detail="Model summary unavailable.") from exc
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
