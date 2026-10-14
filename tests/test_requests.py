@@ -66,6 +66,22 @@ def test_duplicate_catalog_ids_cannot_produce_results_or_model_summaries(monkeyp
     assert response.json() == {"detail": "Catalog product IDs must be unique."}
 
 
+def test_shortlist_cannot_hide_duplicate_ids_outside_selected_products(monkeypatch):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    selected, other = graph_module._catalog()[:2]
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [selected, other, dict(other)])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid catalogs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": "shortlist", "product_ids": [selected["product_id"]],
+        "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert response.json() == {"detail": "Catalog product IDs must be unique."}
+
+
 @pytest.mark.parametrize("limit", [True, False, "5", 5.0, 5.5])
 def test_limit_requires_integer_before_graph_execution(monkeypatch, limit):
     with pytest.raises(ValidationError):
