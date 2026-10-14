@@ -5,8 +5,8 @@ from pydantic import BaseModel, Field, model_validator
 
 class Product(BaseModel):
     product_id: str = Field(min_length=1, pattern=r"\S")
-    name: str
-    category: str
+    name: str = Field(min_length=1, pattern=r"\S")
+    category: str = Field(min_length=1, pattern=r"\S")
     demand_signal: float = Field(ge=0, le=1, strict=True)
     advertiser_count: int = Field(ge=0, strict=True)
     gross_margin: float = Field(ge=0, le=1, strict=True)
