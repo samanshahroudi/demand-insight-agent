@@ -25,7 +25,7 @@ def _catalog() -> list[dict]:
 
 def select_candidates(state: RunState) -> dict:
     request = RunRequest.model_validate(state["request"])
-    catalog = _catalog()
+    catalog = [Product.model_validate(item).model_dump() for item in _catalog()]
     if request.mode == "shortlist":
         requested = set(request.product_ids)
         catalog = [item for item in catalog if item["product_id"] in requested]

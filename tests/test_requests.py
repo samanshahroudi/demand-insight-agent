@@ -6,6 +6,31 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("mode", ["discover", "shortlist"])
+@pytest.mark.parametrize("problem", ["missing_id", "unhashable_id", "non_object"])
+def test_malformed_catalog_is_rejected_before_selection(monkeypatch, mode, problem):
+    import importlib
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    valid = graph_module._catalog()[0]
+    invalid = dict(valid)
+    if problem == "missing_id":
+        del invalid["product_id"]
+    elif problem == "unhashable_id":
+        invalid["product_id"] = [valid["product_id"]]
+    else:
+        invalid = None
+    monkeypatch.setattr(graph_module, "_catalog", lambda: [valid, invalid])
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("invalid catalogs must not request a summary"))
+    response = TestClient(app).post("/runs", json={
+        "mode": mode, "product_ids": [valid["product_id"]], "use_llm_summary": True,
+    })
+    assert response.status_code == 422
+    assert "detail" in response.json()
+    assert "assessments" not in response.json()
+
+
 @pytest.mark.parametrize("field", ["name", "category"])
 @pytest.mark.parametrize("value", ["", "   ", "\t\n"])
 def test_blank_catalog_labels_prevent_results_and_model_calls(monkeypatch, field, value):
