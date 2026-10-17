@@ -4,6 +4,8 @@ A small, self-contained product opportunity screening service. It uses a version
 
 All included catalog records are synthetic examples. This repository contains no customer data or connection to external commerce/ad platforms.
 
+An empty discovery run returns "No products matched this run." without calling the model, even when model summaries are enabled. Credentials are unnecessary when there are no results to summarize.
+
 ## Architecture
 
 ```text

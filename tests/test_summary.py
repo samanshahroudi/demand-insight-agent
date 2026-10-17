@@ -5,6 +5,25 @@ from demand_insight_agent.models import Product
 from demand_insight_agent.scoring import assess
 
 
+def test_empty_discovery_skips_model_summary_without_credentials(monkeypatch):
+    import importlib
+
+    from fastapi.testclient import TestClient
+
+    from demand_insight_agent.api import app
+
+    graph_module = importlib.import_module("demand_insight_agent.graph")
+    monkeypatch.setattr(graph_module, "_catalog", list)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_MODEL", raising=False)
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("empty results must not request a summary"))
+    response = TestClient(app).post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 200
+    assert response.json()["assessments"] == []
+    assert response.json()["summary"] == "No products matched this run."
+
+
 def test_summary_labels_high_scoring_product_rejected_by_margin_gate():
     result = assess(Product(
         product_id="low-margin", name="Low margin product", category="demo",

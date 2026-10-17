@@ -82,7 +82,9 @@ def model_summary(state: RunState) -> dict:
 
 def _summary_route(state: RunState) -> str:
     request = RunRequest.model_validate(state["request"])
-    return "model_summary" if request.use_llm_summary else "deterministic_summary"
+    if request.use_llm_summary and state["assessments"]:
+        return "model_summary"
+    return "deterministic_summary"
 
 
 builder = StateGraph(RunState)
