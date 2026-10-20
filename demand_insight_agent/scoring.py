@@ -7,7 +7,7 @@ def assess(product: Product) -> ProductAssessment:
     """Score a product with explicit, inspectable rules; no model-generated scores."""
     signals = {
         "demand": product.demand_signal * 30,
-        "advertiser_validation": min(product.advertiser_count / 8, 1) * 20,
+        "advertiser_validation": min(product.advertiser_count, 8) / 8 * 20,
         "margin": min(product.gross_margin / 0.60, 1) * 25,
         "market_headroom": (1 - product.market_saturation) * 15,
         "customer_rating": min(product.rating / 5, 1) * 10,

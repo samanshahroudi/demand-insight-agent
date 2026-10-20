@@ -52,7 +52,9 @@ def test_margin_gate_overrides_high_score_only_below_fifteen_percent(margin, ver
     assert any("gross-margin gate" in reason for reason in result.reasons) == (margin < 0.15)
 
 
-@pytest.mark.parametrize("advertisers,margin", [(8, 0.6), (80, 1)])
+@pytest.mark.parametrize("advertisers,margin", [
+    (8, 0.6), (80, 1), pytest.param(10**400, 0.6, id="huge-advertiser-count"),
+])
 def test_component_weights_and_caps_keep_maximum_score_at_one_hundred(advertisers, margin):
     result = assess(product(demand_signal=1, advertiser_count=advertisers, gross_margin=margin,
                             market_saturation=0, rating=5))
