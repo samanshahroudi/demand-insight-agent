@@ -253,3 +253,16 @@ def test_blank_catalog_ids_cannot_produce_assessments_or_model_summaries(monkeyp
     assert response.status_code == 422
     assert "product_id" in response.json()["detail"]
     assert "assessments" not in response.json()
+
+
+@pytest.mark.parametrize("extra", [{"product_id": "sample-001"}, {"limits": 1},
+                                  {"use_llm_summmary": True}])
+def test_unknown_request_fields_are_rejected_before_graph_execution(monkeypatch, extra):
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        RunRequest.model_validate(extra)
+    monkeypatch.setattr("demand_insight_agent.api.run",
+                        lambda request: pytest.fail("unknown fields must not execute the graph"))
+    response = TestClient(app).post("/runs", json=extra)
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["type"] == "extra_forbidden"
+    assert response.json()["detail"][0]["loc"] == ["body", next(iter(extra))]

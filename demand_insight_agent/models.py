@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class Product(BaseModel):
@@ -28,6 +28,8 @@ class ProductAssessment(BaseModel):
 
 
 class RunRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     mode: Literal["discover", "shortlist"] = "discover"
     product_ids: list[Annotated[str, Field(min_length=1, pattern=r"\S")]] = Field(
         default_factory=list, max_length=30,

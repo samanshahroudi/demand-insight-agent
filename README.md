@@ -61,6 +61,7 @@ An empty, whitespace-only, or reasoning-only model response returns HTTP 422 wit
 
 - `GET /health` reports service health.
 - `POST /runs` accepts `mode` (`discover` or `shortlist`), optional `product_ids`, result `limit`, and `use_llm_summary`.
+- Unknown request fields return HTTP 422 before the graph runs, so misspelled options cannot silently use defaults.
 - `limit` requires a JSON integer from 1 to 20; booleans, strings, and floats return HTTP 422 before the graph runs.
 - Product IDs must contain non-whitespace text; malformed IDs return HTTP 422 before the graph runs.
 - Each response includes a run ID, ranked assessments, a summary, and the scoring version.
