@@ -18,9 +18,17 @@ class RunState(TypedDict):
     summary: NotRequired[str]
 
 
+class CatalogUnavailable(RuntimeError):
+    """The local catalog could not be read."""
+
+
 def _catalog() -> list[dict]:
     path = Path(__file__).with_name("catalog.json")
-    return json.loads(path.read_text(encoding="utf-8"))
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise CatalogUnavailable("Product catalog unavailable.") from exc
+    return json.loads(text)
 
 
 def select_candidates(state: RunState) -> dict:

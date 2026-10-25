@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from openai import OpenAIError
 
-from .graph import run
+from .graph import CatalogUnavailable, run
 from .models import RunRequest, RunResponse
 
 app = FastAPI(title="Demand Insight Agent", version="0.1.0")
@@ -16,6 +16,8 @@ def health() -> dict[str, str]:
 def create_run(request: RunRequest) -> RunResponse:
     try:
         return RunResponse.model_validate(run(request))
+    except CatalogUnavailable as exc:
+        raise HTTPException(status_code=503, detail="Product catalog unavailable.") from exc
     except OpenAIError as exc:
         raise HTTPException(status_code=503, detail="Model summary unavailable.") from exc
     except ValueError as exc:

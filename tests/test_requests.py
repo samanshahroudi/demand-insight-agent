@@ -6,6 +6,28 @@ from demand_insight_agent.api import app
 from demand_insight_agent.models import RunRequest
 
 
+@pytest.mark.parametrize("error", [FileNotFoundError("private/catalog.json"),
+                                 PermissionError("private/catalog.json")])
+def test_unreadable_catalog_returns_service_error_without_model_call(monkeypatch, error):
+    from pathlib import Path
+
+    read_text = Path.read_text
+
+    def unreadable(path, *args, **kwargs):
+        if path.name == "catalog.json":
+            raise error
+        return read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", unreadable)
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("unreadable catalogs must not call model"))
+    client = TestClient(app, raise_server_exceptions=False)
+    response = client.post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Product catalog unavailable."}
+    assert client.get("/health").json() == {"status": "ok"}
+
+
 @pytest.mark.parametrize("mode", ["discover", "shortlist"])
 @pytest.mark.parametrize("catalog", [None, {}, "catalog", 7, False])
 def test_nonlist_catalog_is_rejected_before_selection(monkeypatch, mode, catalog):
