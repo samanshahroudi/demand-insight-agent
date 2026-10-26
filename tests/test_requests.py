@@ -28,6 +28,26 @@ def test_unreadable_catalog_returns_service_error_without_model_call(monkeypatch
     assert client.get("/health").json() == {"status": "ok"}
 
 
+def test_invalid_utf8_catalog_returns_service_error_without_model_call(tmp_path, monkeypatch):
+    from pathlib import Path
+
+    catalog = tmp_path / "catalog.json"
+    catalog.write_bytes(b"\xff")
+    read_text = Path.read_text
+
+    def read_catalog(path, *args, **kwargs):
+        return read_text(catalog if path.name == "catalog.json" else path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read_catalog)
+    monkeypatch.setattr("langchain_openai.ChatOpenAI",
+                        lambda **kwargs: pytest.fail("unreadable catalogs must not call model"))
+    client = TestClient(app)
+    response = client.post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Product catalog unavailable."}
+    assert client.get("/health").json() == {"status": "ok"}
+
+
 @pytest.mark.parametrize("mode", ["discover", "shortlist"])
 @pytest.mark.parametrize("catalog", [None, {}, "catalog", 7, False])
 def test_nonlist_catalog_is_rejected_before_selection(monkeypatch, mode, catalog):
