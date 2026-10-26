@@ -26,9 +26,9 @@ def _catalog() -> list[dict]:
     path = Path(__file__).with_name("catalog.json")
     try:
         text = path.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as exc:
+        return json.loads(text)
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise CatalogUnavailable("Product catalog unavailable.") from exc
-    return json.loads(text)
 
 
 def select_candidates(state: RunState) -> dict:

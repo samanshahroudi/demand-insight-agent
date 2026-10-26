@@ -28,11 +28,14 @@ def test_unreadable_catalog_returns_service_error_without_model_call(monkeypatch
     assert client.get("/health").json() == {"status": "ok"}
 
 
-def test_invalid_utf8_catalog_returns_service_error_without_model_call(tmp_path, monkeypatch):
+@pytest.mark.parametrize("contents", [b"\xff", b'{"private": "catalog detail",'])
+def test_unparseable_catalog_returns_service_error_without_model_call(
+    tmp_path, monkeypatch, contents,
+):
     from pathlib import Path
 
     catalog = tmp_path / "catalog.json"
-    catalog.write_bytes(b"\xff")
+    catalog.write_bytes(contents)
     read_text = Path.read_text
 
     def read_catalog(path, *args, **kwargs):
