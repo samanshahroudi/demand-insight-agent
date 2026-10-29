@@ -22,6 +22,10 @@ class CatalogUnavailable(RuntimeError):
     """The local catalog could not be read."""
 
 
+class SummaryUnavailable(RuntimeError):
+    """The model did not return usable summary text."""
+
+
 def _catalog() -> list[dict]:
     path = Path(__file__).with_name("catalog.json")
     try:
@@ -84,7 +88,7 @@ def model_summary(state: RunState) -> dict:
     response = model.invoke(prompt.format(results=json.dumps(state["assessments"], ensure_ascii=False)))
     summary = str(response.text)
     if not summary.strip():
-        raise ValueError("Model returned no summary text.")
+        raise SummaryUnavailable("Model returned no summary text.")
     return {"summary": summary}
 
 

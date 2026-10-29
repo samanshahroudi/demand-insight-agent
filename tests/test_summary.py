@@ -65,15 +65,43 @@ def test_model_summary_rejects_responses_without_summary_text(monkeypatch, conte
 
     from langchain_core.messages import AIMessage
 
-    from demand_insight_agent.graph import model_summary
+    from demand_insight_agent.graph import SummaryUnavailable, model_summary
 
     monkeypatch.setenv("OPENAI_API_KEY", "test-only")
     monkeypatch.setenv("OPENAI_MODEL", "test-model")
     model = Mock()
     model.invoke.return_value = AIMessage(content=content)
     monkeypatch.setattr("langchain_openai.ChatOpenAI", Mock(return_value=model))
-    with pytest.raises(ValueError, match="no summary text"):
+    with pytest.raises(SummaryUnavailable, match="no summary text"):
         model_summary({"assessments": []})
+
+
+@pytest.mark.parametrize("content", ["", " \t\n", [{"type": "reasoning", "reasoning": "private"}]])
+def test_empty_model_summary_returns_503_and_allows_retry(monkeypatch, content):
+    from unittest.mock import Mock
+
+    from fastapi.testclient import TestClient
+    from langchain_core.messages import AIMessage
+
+    from demand_insight_agent.api import app
+
+    monkeypatch.setenv("OPENAI_API_KEY", "test-only")
+    monkeypatch.setenv("OPENAI_MODEL", "test-model")
+    model = Mock()
+    model.invoke.side_effect = [AIMessage(content=content), AIMessage(content="Summary recovered.")]
+    monkeypatch.setattr("langchain_openai.ChatOpenAI", Mock(return_value=model))
+    client = TestClient(app)
+    response = client.post("/runs", json={"use_llm_summary": True})
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Model summary unavailable."}
+    assert client.get("/health").json() == {"status": "ok"}
+    assert client.post("/runs", json={}).status_code == 200
+    assert model.invoke.call_count == 1
+    recovered = client.post("/runs", json={"use_llm_summary": True})
+    assert recovered.status_code == 200
+    assert recovered.json()["summary"] == "Summary recovered."
+    assert recovered.json()["assessments"]
+    assert model.invoke.call_count == 2
 
 
 @pytest.mark.parametrize("failure", ["authentication", "rate_limit", "timeout", "server"])

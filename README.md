@@ -57,7 +57,7 @@ Model provider failures return HTTP 503 with `Model summary unavailable.` and no
 Missing or unreadable catalog files return HTTP 503 with `Product catalog unavailable.` without exposing filesystem details or calling the model. The health endpoint remains available.
 Catalog files with invalid UTF-8 or malformed JSON receive the same HTTP 503 response without exposing decoding or parsing details.
 `use_llm_summary` requires a JSON boolean; strings and numbers return HTTP 422 before the graph runs.
-An empty, whitespace-only, or reasoning-only model response returns HTTP 422 with `Model returned no summary text.` instead of a successful run with a blank summary.
+An empty, whitespace-only, or reasoning-only model response returns HTTP 503 with `Model summary unavailable.`, just like other provider failures. The same request can be retried; deterministic runs remain available.
 
 ## API
 
